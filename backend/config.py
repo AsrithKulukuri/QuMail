@@ -4,7 +4,19 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / '.env')
-DB_PATH = ROOT / 'qumail.db'
+
+if os.getenv('VERCEL'):
+    import shutil
+    DB_PATH = Path('/tmp/qumail.db')
+    init_db = ROOT / 'qumail.db'
+    if init_db.exists() and not DB_PATH.exists():
+        try:
+            shutil.copy2(init_db, DB_PATH)
+        except Exception:
+            pass
+else:
+    DB_PATH = ROOT / 'qumail.db'
+
 SECRET_KEY = os.getenv('SECRET_KEY', 'qumail-dev-secret-change-me')
 KME_ID = os.getenv('KME_ID', 'SIM-KME-001')
 DEMO_EMAIL_MODE = os.getenv('DEMO_EMAIL_MODE', 'true').lower() in {'1','true','yes','on'}
