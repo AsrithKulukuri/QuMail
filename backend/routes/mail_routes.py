@@ -332,27 +332,59 @@ def decrypt_mail():
     u, err = require_user()
     if err: return err
     data = request.get_json(silent=True) or {}
-    message = EmailMessage.query.filter_by(message_id=data.get('message_id'), recipient_id=u.id).first()
+    message_id = data.get('message_id')
+    message = EmailMessage.query.filter(
+        EmailMessage.message_id == message_id,
+        or_(EmailMessage.recipient_id == u.id, EmailMessage.recipient_address == u.email)
+    ).first()
     if not message:
-        return jsonify(error='Message not found'), 404
-    envelope = json.loads(message.payload)
+        return jsonify(error='Message not found in your mailbox'), 404
+    try:
+        envelope = json.loads(message.payload)
+    except Exception:
+        return jsonify(error='Corrupted payload envelope'), 400
     level = message.level
     if level == 1:
-        key = key_for_receive(u.id, message.key_id + '-PEER')
+        if not message.key_id:
+            return jsonify(error='Message missing associated Quantum Key ID'), 400
+        key = key_for_receive(u.id, message.key_id + '-PEER') or key_for_receive(u.id, message.key_id)
         if not key:
-            return jsonify(error='Matching unused OTP key not available at recipient KME'), 409
-        raw = otp_decrypt(envelope['crypto'], key.material)
+            consumed_key = QuantumKey.query.filter(
+                QuantumKey.owner_id == u.id,
+                QuantumKey.key_id.in_([message.key_id + '-PEER', message.key_id])
+            ).first()
+            if consumed_key and consumed_key.consumed:
+                return jsonify(error=f'Quantum OTP key ({message.key_id}) has already been consumed (One-Time Pad rule). Generate a fresh key for new messages.'), 409
+            return jsonify(error=f'Matching BB84 key ({message.key_id}-PEER) not found in recipient KME key pool. Request a Quantum Key first before sending.'), 409
+        try:
+            raw = otp_decrypt(envelope['crypto'], key.material)
+        except Exception as exc:
+            return jsonify(error=f'OTP decryption error: {exc}'), 400
         key.consumed = True
     elif level == 2:
-        key = key_for_receive(u.id, message.key_id + '-PEER')
+        if not message.key_id:
+            return jsonify(error='Message missing associated Quantum Key ID'), 400
+        key = key_for_receive(u.id, message.key_id + '-PEER') or key_for_receive(u.id, message.key_id)
         if not key:
-            return jsonify(error='Matching unused QKD key not available at recipient KME'), 409
-        raw = aes_decrypt(envelope['crypto'], derive_aes_key(key.material))
+            consumed_key = QuantumKey.query.filter(
+                QuantumKey.owner_id == u.id,
+                QuantumKey.key_id.in_([message.key_id + '-PEER', message.key_id])
+            ).first()
+            if consumed_key and consumed_key.consumed:
+                return jsonify(error=f'Quantum key ({message.key_id}) has already been consumed. Generate a fresh key for new messages.'), 409
+            return jsonify(error=f'Matching QKD key ({message.key_id}-PEER) not found in recipient KME key pool.'), 409
+        try:
+            raw = aes_decrypt(envelope['crypto'], derive_aes_key(key.material))
+        except Exception as exc:
+            return jsonify(error=f'AES decryption error: {exc}'), 400
         key.consumed = True
     elif level == 3:
         if not u.pqc_private:
             return jsonify(error='Recipient ML-KEM private key is unavailable'), 409
-        raw = mlkem_decrypt(envelope['crypto'], u.pqc_private)
+        try:
+            raw = mlkem_decrypt(envelope['crypto'], u.pqc_private)
+        except Exception as exc:
+            return jsonify(error=f'ML-KEM decryption error: {exc}'), 400
     else:
         raw = envelope['crypto']['plaintext'].encode()
     db.session.commit()
