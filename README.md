@@ -1,3 +1,6 @@
+Login details 
+mail:alice@qumail.demo and password:alice123
+mail:bob@qumail.com and password:bob123
 # QuMail — SIH25179 Working Prototype
 
 QuMail is an application-layer secure email prototype built around the architecture in the SIH problem statement. The GUI remains the primary `frontend/Qumail_Server.html` design, while Flask provides the API, SQLite stores demo state, the KME exposes an ETSI GS QKD 014-style REST surface, and Python's SMTP/IMAP standard-library clients provide compatibility with existing mail infrastructure.
