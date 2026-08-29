@@ -197,7 +197,13 @@ async function sendMail(){
         closeCompose();
         await switchTab('sent');
         await refresh();
-        toast(`Secure mail sent to ${recipient}! (Saved in Sent folder)`);
+        if(d.external_error){
+            toast(`Stored locally, but SMTP transmission failed: ${d.external_error}`, false);
+        } else if(d.external_sent){
+            toast(`Secure mail sent through SMTP to ${recipient}! (Saved in Sent)`);
+        } else {
+            toast(`Secure mail saved in local store for ${recipient}! (Saved in Sent)`);
+        }
     }catch(x){
         toast(x.message,false);
     }finally{
