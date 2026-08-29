@@ -1,2 +1,17 @@
+[project]
+name = "qumail"
+version = "0.1.0"
+description = "QuMail - Quantum Secure Email Prototype"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "Flask>=3.1,<4",
+    "Flask-SQLAlchemy>=3.1,<4",
+    "Flask-Cors>=6,<7",
+    "python-dotenv>=1,<2",
+    "cryptography>=46,<48",
+    "pytest>=8,<9",
+]
+
 [tool.vercel]
 entrypoint = "backend.app:app"
