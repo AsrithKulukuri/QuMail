@@ -27,7 +27,23 @@ async function api(url,options={}){
 function toast(msg,good=true){
     $('toast').textContent=msg;
     $('toast').className='toast '+(good?'good':'bad');
-    setTimeout(()=>$('toast').classList.add('hidden'),3500);
+    $('toast').classList.remove('hidden');
+    setTimeout(()=>$('toast').classList.add('hidden'),4500);
+}
+
+async function quickSwitchUser(targetEmail, targetPass){
+    try {
+        await api('/api/logout',{method:'POST'});
+        const d=await api('/api/login',{method:'POST',body:JSON.stringify({email:targetEmail,password:targetPass})});
+        state.user=d.user;
+        $('who').innerHTML=`<b>${esc(d.user.name)}</b> (${esc(d.user.email)}) <button onclick="quickSwitchUser('${d.user.email==='alice@qumail.demo'?'bob@qumail.demo':'alice@qumail.demo'}','${d.user.email==='alice@qumail.demo'?'bob123':'alice123'}')" class="pill" style="background:#132840;margin-left:8px;cursor:pointer">⇄ Switch to ${d.user.email==='alice@qumail.demo'?'Bob':'Alice'}</button>`;
+        $('recipient').value = d.user.email==='alice@qumail.demo' ? 'bob@qumail.demo' : 'alice@qumail.demo';
+        await switchTab('inbox');
+        await refresh();
+        toast(`Logged in as ${d.user.name}`);
+    } catch(x){
+        toast(x.message, false);
+    }
 }
 
 async function login(e){
@@ -38,7 +54,7 @@ async function login(e){
         state.user=d.user;
         $('loginView').classList.add('hidden');
         $('appView').classList.remove('hidden');
-        $('who').textContent=d.user.name+' · '+d.user.email;
+        $('who').innerHTML=`<b>${esc(d.user.name)}</b> (${esc(d.user.email)}) <button onclick="quickSwitchUser('${d.user.email==='alice@qumail.demo'?'bob@qumail.demo':'alice@qumail.demo'}','${d.user.email==='alice@qumail.demo'?'bob123':'alice123'}')" class="pill" style="background:#132840;margin-left:8px;cursor:pointer">⇄ Switch to ${d.user.email==='alice@qumail.demo'?'Bob':'Alice'}</button>`;
         if(d.user.email==='alice@qumail.demo'){
             $('recipient').value='bob@qumail.demo';
         } else {
@@ -57,7 +73,17 @@ async function logout(){
 }
 
 async function refresh(){
-    await Promise.all([loadKeys(),loadCurrentTab(),loadStatus()]);
+    await Promise.all([loadKeys(),loadCurrentTab(),loadStatus(),updateBadges()]);
+}
+
+async function updateBadges(){
+    try {
+        const [inboxRes, sentRes] = await Promise.all([api('/api/mail/inbox'), api('/api/mail/sent')]);
+        const inboxCount = inboxRes.messages ? inboxRes.messages.length : 0;
+        const sentCount = sentRes.messages ? sentRes.messages.length : 0;
+        $('inboxTab').innerHTML = `📥 Inbox <span style="background:#1f3b5c;padding:2px 7px;border-radius:10px;font-size:11px;margin-left:6px">${inboxCount}</span>`;
+        $('sentTab').innerHTML = `📤 Sent <span style="background:#1f3b5c;padding:2px 7px;border-radius:10px;font-size:11px;margin-left:6px">${sentCount}</span>`;
+    } catch(e) {}
 }
 
 async function loadStatus(){
@@ -90,13 +116,19 @@ async function loadCurrentTab(){
     } else {
         await loadInbox();
     }
+    await updateBadges();
 }
 
 async function loadInbox(){
     $('viewTitle').textContent='Inbox';
     try{
         const d=await api('/api/mail/inbox');
-        $('mailList').innerHTML=d.messages.map(m=>`<div class="mail"><div><h3>${esc(m.subject)}</h3><p>From ${esc(m.from)} · ${m.created_at.replace('T',' ').slice(0,19)}</p><p>${m.encrypted?'Encrypted application payload':'Standard payload'} · ${m.key_id||'No QKD key'}</p></div><div><span class="level">L${m.level}</span>${m.level<4?`<button onclick="decrypt('${m.id}')" style="display:block;margin-top:8px;padding:6px;border:1px solid #29435e;background:#10253a;color:#dff8ff;border-radius:8px">Decrypt</button>`:''}</div></div>`).join('')||'<div class="empty">No messages in inbox.</div>';
+        const userEmail = state.user ? state.user.email : '';
+        const otherUser = userEmail === 'alice@qumail.demo' ? 'Bob (bob@qumail.demo)' : 'Alice (alice@qumail.demo)';
+        const otherEmail = userEmail === 'alice@qumail.demo' ? 'bob@qumail.demo' : 'alice@qumail.demo';
+        const otherPass = userEmail === 'alice@qumail.demo' ? 'bob123' : 'alice123';
+        
+        $('mailList').innerHTML=d.messages.map(m=>`<div class="mail"><div><h3>${esc(m.subject)}</h3><p>From ${esc(m.from)} · ${m.created_at.replace('T',' ').slice(0,19)}</p><p>${m.encrypted?'Encrypted application payload':'Standard payload'} · ${m.key_id||'No QKD key'}</p></div><div><span class="level">L${m.level}</span>${m.level<4?`<button onclick="decrypt('${m.id}')" style="display:block;margin-top:8px;padding:6px;border:1px solid #29435e;background:#10253a;color:#dff8ff;border-radius:8px">Decrypt</button>`:''}</div></div>`).join('')||`<div class="empty"><div><div style="font-size:16px;font-weight:600;margin-bottom:8px">No incoming messages in your Inbox</div><p style="color:var(--muted);font-size:12px;max-width:480px;line-height:1.5">You are logged in as <b>${esc(userEmail)}</b>.<br>Emails you send are stored in your <b><a href="javascript:void(0)" onclick="switchTab('sent')" style="color:var(--cyan)">Sent</a></b> tab and delivered to the recipient's inbox.<br><br><button onclick="quickSwitchUser('${otherEmail}','${otherPass}')" class="pill" style="background:#132840;cursor:pointer">⇄ Switch to ${otherUser} to see their Inbox</button></p></div></div>`;
     }catch(x){
         $('mailList').innerHTML=`<div class="empty">${esc(x.message)}</div>`;
     }
@@ -106,7 +138,7 @@ async function loadSent(){
     $('viewTitle').textContent='Sent Messages';
     try{
         const d=await api('/api/mail/sent');
-        $('mailList').innerHTML=d.messages.map(m=>`<div class="mail"><div><h3>${esc(m.subject)}</h3><p>To ${esc(m.to)} · ${m.created_at.replace('T',' ').slice(0,19)}</p><p>${m.encrypted?'Encrypted application payload':'Standard payload'} · Status: ${esc(m.status)} · ${m.key_id||'No QKD key'}</p></div><div><span class="level">L${m.level}</span></div></div>`).join('')||'<div class="empty">No sent messages yet.</div>';
+        $('mailList').innerHTML=d.messages.map(m=>`<div class="mail"><div><h3>${esc(m.subject)}</h3><p>To ${esc(m.to)} · ${m.created_at.replace('T',' ').slice(0,19)}</p><p>${m.encrypted?'Encrypted application payload':'Standard payload'} · Status: ${esc(m.status)} · ${m.key_id||'No QKD key'}</p></div><div><span class="level">L${m.level}</span></div></div>`).join('')||'<div class="empty"><div><div style="font-size:16px;font-weight:600;margin-bottom:8px">No sent messages yet</div><p style="color:var(--muted);font-size:12px">Click <b>Compose Secure Mail</b> to send an encrypted message.</p></div></div>';
     }catch(x){
         $('mailList').innerHTML=`<div class="empty">${esc(x.message)}</div>`;
     }
@@ -139,6 +171,7 @@ function closeCompose(){ $('composeModal').classList.add('hidden') }
 
 async function sendMail(){
     const level=Number($('level').value);
+    const recipient=$('recipient').value.trim();
     $('sendBtn').disabled=true;
     $('sendBtn').textContent='Transmitting…';
     try{
@@ -154,7 +187,7 @@ async function sendMail(){
             attachments.push({name:f.name,mime:f.type||'application/octet-stream',data});
         }
         const d=await api('/api/mail/send',{method:'POST',body:JSON.stringify({
-            recipient:$('recipient').value,
+            recipient,
             subject:$('subject').value,
             body:$('body').value,
             level,
@@ -162,8 +195,9 @@ async function sendMail(){
         })});
         $('attachments').value='';
         closeCompose();
+        await switchTab('sent');
         await refresh();
-        toast(d.external_sent?'Transmission sent through SMTP.':'Transmission stored in QuMail demo mailbox.');
+        toast(`Secure mail sent to ${recipient}! (Saved in Sent folder)`);
     }catch(x){
         toast(x.message,false);
     }finally{
