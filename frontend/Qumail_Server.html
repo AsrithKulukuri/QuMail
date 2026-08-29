@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuMail — Quantum Secure Email</title>
+<style>
+:root{--bg:#07111f;--panel:#0d1b2d;--panel2:#101f33;--line:#20344d;--text:#edf4ff;--muted:#8da2bb;--cyan:#6ee7f2;--green:#68e0a0;--red:#ff7885;--amber:#ffd166}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 20% 0,#123252 0,#07111f 42%,#050b13 100%);color:var(--text);min-height:100vh}.hidden{display:none!important}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.shell{max-width:1380px;margin:auto;padding:22px}.top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:4px 0 18px}.brand{display:flex;gap:12px;align-items:center}.logo{width:40px;height:40px;border:1px solid #315274;border-radius:12px;display:grid;place-items:center;color:var(--cyan);font-size:22px}.brand h1{font-size:21px;margin:0}.brand small{color:var(--muted)}.user{display:flex;align-items:center;gap:12px;color:var(--muted)}
+.layout{display:grid;grid-template-columns:310px 1fr;gap:18px;margin-top:18px}.side,.content,.card{background:rgba(13,27,45,.92);border:1px solid var(--line);border-radius:18px}.side{padding:16px}.content{padding:22px;min-height:680px}.nav{display:grid;gap:8px;margin-bottom:16px}.nav button,.compose{border:1px solid transparent;background:transparent;color:var(--muted);padding:11px 12px;border-radius:10px;text-align:left}.nav button.active,.nav button:hover{background:#13263d;color:var(--text);border-color:#24415f}.compose,.primary{background:#e8f7ff;color:#07111f;font-weight:700}.compose{width:100%;text-align:center;margin-bottom:16px}.kme,.pqc{padding:14px;border:1px solid var(--line);border-radius:14px;background:#091624;margin-top:12px}.title{font-size:12px;letter-spacing:1.3px;font-weight:800}.status{color:var(--green);font-size:12px;margin:5px 0 12px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px}.meta div{font-size:10px;color:var(--muted)}.meta b{display:block;color:var(--text);font-size:11px;margin-top:2px}.request{width:100%;margin:12px 0 10px;padding:10px;border:1px solid #2b506e;border-radius:10px;background:#102b42;color:var(--cyan);font-weight:700}.keyrow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid #16283c;font-size:11px}.unused{color:var(--green)}.consumed{color:var(--red)}.pqc-key{font-size:10px;color:var(--cyan);margin-top:8px;word-break:break-all}.private{font-size:10px;color:var(--muted);margin-top:5px}.heading{display:flex;justify-content:space-between;align-items:end;margin-bottom:18px}.heading h2{margin:0;font-size:25px}.heading p{margin:4px 0 0;color:var(--muted);font-size:13px}.pill{padding:6px 9px;border:1px solid #2c4963;border-radius:99px;color:var(--cyan);font-size:11px}.mail{padding:16px;border:1px solid var(--line);border-radius:14px;background:#0a1726;display:flex;justify-content:space-between;gap:15px;margin-bottom:10px}.mail h3{margin:0 0 5px;font-size:14px}.mail p{margin:0;color:var(--muted);font-size:12px}.level{font-size:10px;border:1px solid #36536f;border-radius:99px;padding:5px 8px;height:max-content}.empty{height:420px;display:grid;place-items:center;color:var(--muted);border:1px dashed #27405a;border-radius:14px}.modal{position:fixed;inset:0;background:#0009;display:grid;place-items:center;padding:20px}.dialog{width:min(720px,100%);background:#0c1a2a;border:1px solid var(--line);border-radius:18px;padding:20px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin:10px 0}.field label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;padding:11px;background:#07111f;border:1px solid #29435e;border-radius:10px;color:var(--text)}textarea{min-height:150px;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.actions button{padding:10px 15px;border-radius:10px;border:1px solid #29435e;background:#12263b;color:var(--text)}.actions .primary{background:#e8f7ff;color:#07111f}.login{min-height:100vh;display:grid;place-items:center;padding:20px}.loginbox{width:min(430px,100%);padding:28px;background:#0c1a2a;border:1px solid var(--line);border-radius:20px}.loginbox h1{margin:0 0 5px}.loginbox p{color:var(--muted);font-size:13px}.err{color:var(--red);font-size:12px;margin-top:10px}.toast{position:fixed;right:20px;bottom:20px;padding:12px 15px;background:#11263a;border:1px solid #31506b;border-radius:10px;z-index:10;font-size:12px}.toast.good{border-color:#2e7a58;color:var(--green)}.toast.bad{border-color:#873b47;color:#ff9da6}@media(max-width:900px){.layout{grid-template-columns:1fr}.side{order:2}.content{order:1}.row{grid-template-columns:1fr}}
+</style></head>
+<body>
+<div id="loginView" class="login"><div class="loginbox"><div class="brand"><div class="logo">⚛</div><div><h1>QuMail</h1><small>Quantum-secure email client</small></div></div><p>Secure application-layer email with simulated QKD/KME integration.</p><form id="loginForm"><div class="field"><label>QuMail ID</label><input id="email" value="alice@qumail.demo" required></div><div class="field"><label>Password</label><input id="password" type="password" value="alice123" required></div><button class="primary" style="width:100%;padding:12px;border:0;border-radius:10px">Establish Connection</button></form><div id="loginError" class="err"></div></div></div>
+<div id="appView" class="hidden"><div class="shell"><header class="top"><div class="brand"><div class="logo">⚛</div><div><h1>QuMail</h1><small>Quantum-secure email client</small></div></div><div class="user"><span id="who"></span><button id="logout" class="nav">Logout</button></div></header><div class="layout"><aside class="side"><div class="nav"><button class="active" id="inboxTab">📥 Inbox</button><button id="sentTab">📤 Sent</button></div><button class="compose" id="composeBtn">✎ Compose Secure Mail</button><section class="kme"><div class="title">QUANTUM KEY MANAGER</div><div class="status">● Connected · ETSI GS QKD 014-style API</div><div class="meta"><div>KME<b>SIM-KME-001</b></div><div>Source<b>BB84 simulation</b></div><div>QBER<b id="qber">—</b></div><div>Bases<b id="bases">—</b></div><div>Eve<b id="eve">0%</b></div><div>Last run<b id="last">—</b></div></div><button class="request" id="requestKey">Request Quantum Key</button><div class="title" style="font-size:10px;color:var(--muted)">KEY POOL</div><div id="keyPool"></div></section><section class="pqc"><div class="title">POST-QUANTUM IDENTITY</div><div style="font-size:10px;color:var(--muted);margin-top:5px">ML-KEM-512 · public key distributed · private key protected</div><div id="publicKey" class="pqc-key">PUBLIC KEY · —</div><div class="private">🔒 PRIVATE KEY · Never transmitted</div></section></aside><main class="content"><div class="heading"><div><h2 id="viewTitle">Inbox</h2><p>Application-layer security over existing email infrastructure.</p></div><div style="display:flex;gap:8px;align-items:center"><button id="syncBtn" class="pill" style="background:transparent;cursor:pointer">Sync Mail</button><span class="pill" id="modePill">DEMO EMAIL MODE</span></div></div><div id="mailList"></div></main></div></div></div>
+<div id="composeModal" class="modal hidden"><div class="dialog"><div class="heading"><div><h2>Compose Secure Mail</h2><p>Choose the protection level before sending.</p></div><button id="closeCompose">✕</button></div><div class="row"><div class="field"><label>Recipient QuMail ID</label><input id="recipient" value="bob@qumail.demo"></div><div class="field"><label>Security Level</label><select id="level"><option value="1">Level 1 — Quantum Secure OTP</option><option value="2">Level 2 — Quantum-aided AES</option><option value="3">Level 3 — Post-Quantum ML-KEM</option><option value="4">Level 4 — Standard</option></select></div></div><div class="field"><label>Subject</label><input id="subject" value="QuMail security test"></div><div class="field"><label>Message</label><textarea id="body">Hello Bob — this message was sent through QuMail.</textarea></div><div class="field"><label>Attachments</label><input id="attachments" type="file" multiple><div style="color:var(--muted);font-size:10px;margin-top:5px">Attachments are encoded inside the application payload before transmission.</div></div><div class="actions"><button id="cancelCompose">Cancel</button><button id="sendBtn" class="primary">Send Secure Mail</button></div></div></div><div id="toast" class="toast hidden"></div>
+<script>
+const $=id=>document.getElementById(id);
+let state={user:null, currentTab:'inbox'};
+
+async function api(url,options={}){
+    const r=await fetch(url,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(options.headers||{})},...options});
+    let d={};try{d=await r.json()}catch{}
+    if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);
+    return d;
+}
+
+function toast(msg,good=true){
+    $('toast').textContent=msg;
+    $('toast').className='toast '+(good?'good':'bad');
+    setTimeout(()=>$('toast').classList.add('hidden'),3500);
+}
+
+async function login(e){
+    e.preventDefault();
+    $('loginError').textContent='';
+    try{
+        const d=await api('/api/login',{method:'POST',body:JSON.stringify({email:$('email').value,password:$('password').value})});
+        state.user=d.user;
+        $('loginView').classList.add('hidden');
+        $('appView').classList.remove('hidden');
+        $('who').textContent=d.user.name+' · '+d.user.email;
+        if(d.user.email==='alice@qumail.demo'){
+            $('recipient').value='bob@qumail.demo';
+        } else {
+            $('recipient').value='alice@qumail.demo';
+        }
+        await switchTab('inbox');
+        await refresh();
+    }catch(x){
+        $('loginError').textContent=x.message;
+    }
+}
+
+async function logout(){
+    await api('/api/logout',{method:'POST'});
+    location.reload();
+}
+
+async function refresh(){
+    await Promise.all([loadKeys(),loadCurrentTab(),loadStatus()]);
+}
+
+async function loadStatus(){
+    const d=await api('/api/status');
+    $('modePill').textContent=d.demo_email_mode?'DEMO EMAIL MODE':'REAL SMTP/IMAP MODE';
+}
+
+async function loadKeys(){
+    const d=await api('/api/v1/keys');
+    $('keyPool').innerHTML=d.keys.slice(0,7).map(k=>`<div class="keyrow"><b>${k.id}</b><span>${k.bits}b</span><span class="${k.consumed?'consumed':'unused'}">${k.consumed?'CONSUMED':'UNUSED'}</span></div>`).join('')||'<div style="color:var(--muted);font-size:10px;padding-top:8px">No keys yet.</div>';
+}
+
+async function switchTab(tab){
+    state.currentTab = tab;
+    if(tab==='inbox'){
+        $('inboxTab').classList.add('active');
+        $('sentTab').classList.remove('active');
+        $('viewTitle').textContent='Inbox';
+    } else {
+        $('sentTab').classList.add('active');
+        $('inboxTab').classList.remove('active');
+        $('viewTitle').textContent='Sent Messages';
+    }
+    await loadCurrentTab();
+}
+
+async function loadCurrentTab(){
+    if(state.currentTab==='sent'){
+        await loadSent();
+    } else {
+        await loadInbox();
+    }
+}
+
+async function loadInbox(){
+    $('viewTitle').textContent='Inbox';
+    try{
+        const d=await api('/api/mail/inbox');
+        $('mailList').innerHTML=d.messages.map(m=>`<div class="mail"><div><h3>${esc(m.subject)}</h3><p>From ${esc(m.from)} · ${m.created_at.replace('T',' ').slice(0,19)}</p><p>${m.encrypted?'Encrypted application payload':'Standard payload'} · ${m.key_id||'No QKD key'}</p></div><div><span class="level">L${m.level}</span>${m.level<4?`<button onclick="decrypt('${m.id}')" style="display:block;margin-top:8px;padding:6px;border:1px solid #29435e;background:#10253a;color:#dff8ff;border-radius:8px">Decrypt</button>`:''}</div></div>`).join('')||'<div class="empty">No messages in inbox.</div>';
+    }catch(x){
+        $('mailList').innerHTML=`<div class="empty">${esc(x.message)}</div>`;
+    }
+}
+
+async function loadSent(){
+    $('viewTitle').textContent='Sent Messages';
+    try{
+        const d=await api('/api/mail/sent');
+        $('mailList').innerHTML=d.messages.map(m=>`<div class="mail"><div><h3>${esc(m.subject)}</h3><p>To ${esc(m.to)} · ${m.created_at.replace('T',' ').slice(0,19)}</p><p>${m.encrypted?'Encrypted application payload':'Standard payload'} · Status: ${esc(m.status)} · ${m.key_id||'No QKD key'}</p></div><div><span class="level">L${m.level}</span></div></div>`).join('')||'<div class="empty">No sent messages yet.</div>';
+    }catch(x){
+        $('mailList').innerHTML=`<div class="empty">${esc(x.message)}</div>`;
+    }
+}
+
+function esc(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+
+async function requestKey(){
+    const peer=$('recipient').value.trim()||'bob@qumail.demo';
+    $('requestKey').disabled=true;
+    $('requestKey').textContent='Running BB84…';
+    try{
+        const d=await api('/api/v1/keys/generate',{method:'POST',body:JSON.stringify({key_bits:4096,eve_probability:0,peer_email:peer})});
+        $('qber').textContent=d.key.qber.toFixed(2)+'%';
+        $('bases').textContent=d.key.matching_bases;
+        $('eve').textContent='0%';
+        $('last').textContent=new Date().toLocaleTimeString();
+        await loadKeys();
+        toast(`Quantum key ${d.key.id} generated and provisioned.`);
+    }catch(x){
+        toast(x.message,false);
+    }finally{
+        $('requestKey').disabled=false;
+        $('requestKey').textContent='Request Quantum Key';
+    }
+}
+
+function openCompose(){ $('composeModal').classList.remove('hidden') }
+function closeCompose(){ $('composeModal').classList.add('hidden') }
+
+async function sendMail(){
+    const level=Number($('level').value);
+    $('sendBtn').disabled=true;
+    $('sendBtn').textContent='Transmitting…';
+    try{
+        const files=Array.from($('attachments').files||[]);
+        const attachments=[];
+        for(const f of files){
+            const data=await new Promise((resolve,reject)=>{
+                const r=new FileReader();
+                r.onload=()=>resolve(String(r.result).split(',')[1]);
+                r.onerror=reject;
+                r.readAsDataURL(f);
+            });
+            attachments.push({name:f.name,mime:f.type||'application/octet-stream',data});
+        }
+        const d=await api('/api/mail/send',{method:'POST',body:JSON.stringify({
+            recipient:$('recipient').value,
+            subject:$('subject').value,
+            body:$('body').value,
+            level,
+            attachments
+        })});
+        $('attachments').value='';
+        closeCompose();
+        await refresh();
+        toast(d.external_sent?'Transmission sent through SMTP.':'Transmission stored in QuMail demo mailbox.');
+    }catch(x){
+        toast(x.message,false);
+    }finally{
+        $('sendBtn').disabled=false;
+        $('sendBtn').textContent='Send Secure Mail';
+    }
+}
+
+async function decrypt(id){
+    try{
+        const d=await api('/api/mail/decrypt',{method:'POST',body:JSON.stringify({message_id:id})});
+        alert('Decrypted message:\n\n'+d.body);
+        await loadCurrentTab();
+        await loadKeys();
+    }catch(x){
+        toast(x.message,false);
+    }
+}
+
+async function syncMail(){
+    try{
+        const d=await api('/api/mail/sync',{method:'POST'});
+        await loadCurrentTab();
+        toast(`Mail sync complete · ${d.imported} QuMail message(s) imported.`);
+    }catch(x){
+        toast(x.message,false);
+    }
+}
+
+$('loginForm').addEventListener('submit',login);
+$('logout').onclick=logout;
+$('inboxTab').onclick=()=>switchTab('inbox');
+$('sentTab').onclick=()=>switchTab('sent');
+$('requestKey').onclick=requestKey;
+$('composeBtn').onclick=openCompose;
+$('closeCompose').onclick=closeCompose;
+$('cancelCompose').onclick=closeCompose;
+$('sendBtn').onclick=sendMail;
+$('syncBtn').onclick=syncMail;
+$('level').onchange=()=>{if(Number($('level').value)===1)toast('L1 requires a QKD key at least as long as the payload.')};
+</script></body></html>
+
